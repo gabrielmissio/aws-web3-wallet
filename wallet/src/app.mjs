@@ -77,10 +77,10 @@ app.post('/wallet/:walletId/address', async (req, res) => {
 
 app.post('/contract', async (req, res) => {
   console.log('Creating contract')
-  const { from, contractId, constructorArgs } = req.body
+  const { from, artifactName, constructorArgs } = req.body
 
   try {
-    const newContract = await contractService.createContract({ from, contractId, constructorArgs })
+    const newContract = await contractService.createContract({ from, artifactName, constructorArgs })
     return res.status(201).send(newContract)
   } catch (error) {
     console.error(error)
@@ -88,12 +88,45 @@ app.post('/contract', async (req, res) => {
   }
 })
 
-app.get('/contract/:contractAddress/call', async (req, res) => {
-  res.send('contract call')
+app.post('/contract/:contractAddress/call', async (req, res) => {
+  console.log('Calling contract')
+  const { contractAddress } = req.params
+  const { artifactName, contractFunctionName, contractFunctionArgs } = req.body
+
+  try {
+    const data = await contractService.callContract({
+      artifactName,
+      contractAddress,
+      contractFuncArgs: contractFunctionArgs,
+      contractFuncName: contractFunctionName,
+    })
+
+    return res.status(200).send({ data })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send('Error calling contract')
+  }
 })
 
-app.post('/contract/:contractAddress/call', async (req, res) => {
-  res.send('contract call')
+app.post('/contract/:contractAddress/call-tx', async (req, res) => {
+  console.log('Calling contract tx')
+  const { contractAddress } = req.params
+  const { from, artifactName, contractFunctionName, contractFunctionArgs } = req.body
+
+  try {
+    const data = await contractService.callContractTx({
+      from,
+      artifactName,
+      contractAddress,
+      contractFuncArgs: contractFunctionArgs,
+      contractFuncName: contractFunctionName,
+    })
+
+    return res.status(200).send({ data })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send('Error calling contract tx')
+  }
 })
 
 export default app

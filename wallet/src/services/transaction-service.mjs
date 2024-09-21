@@ -6,15 +6,28 @@ export class TransactionService {
     this.contractHelper = contractHelper
   }
 
-  async buildContractCallTx ({
-    sender,
-    contractId,
+  async readOnlyContractCall ({
+    artifactName,
     contractAddress,
     contractFuncName,
     contractFuncArgs = [],
   }) {
     const readOnlyContract = await this.contractHelper.getReadOnlyContract({
-      contractName: contractId, contractAddress,
+      contractName: artifactName, contractAddress,
+    })
+
+    return readOnlyContract[contractFuncName](...contractFuncArgs)
+  }
+
+  async buildContractCallTx ({
+    sender,
+    artifactName,
+    contractAddress,
+    contractFuncName,
+    contractFuncArgs = [],
+  }) {
+    const readOnlyContract = await this.contractHelper.getReadOnlyContract({
+      contractName: artifactName, contractAddress,
     })
     const txData = readOnlyContract.interface.encodeFunctionData(
       contractFuncName, contractFuncArgs,
@@ -46,10 +59,10 @@ export class TransactionService {
 
   async buildContractDeployTx ({
     sender,
-    contractId,
+    artifactName,
     constructorArgs = [],
   }) {
-    const contractFactory = await this.contractHelper.getReadOnlyContractFactory({ contractName: contractId })
+    const contractFactory = await this.contractHelper.getReadOnlyContractFactory({ contractName: artifactName })
     const { data: txData } = await contractFactory.getDeployTransaction(...constructorArgs)
 
     const [{ chainId }, nonce, gasLimit] = await Promise.all([
