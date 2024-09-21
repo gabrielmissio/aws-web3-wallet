@@ -1,0 +1,20 @@
+{
+  "name": "vault",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "dotenvx run -- nodemon ./src/index.mjs",
+    "start": "node ./src/index.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.654.0",
+    "@aws-sdk/node-http-handler": "^3.374.0",
+    "ethers": "^6.13.2",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^1.14.1",
+    "nodemon": "^3.1.7"
+  }
+}
