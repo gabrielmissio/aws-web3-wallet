@@ -40,7 +40,13 @@ app.post('/hd-wallet', async (req, res) => {
 app.get('/hd-wallet/:walletId', async (req, res) => {
   try {
     const { walletId } = req.params
-    const derivationPath = buildDerivationPath(req.query)
+    const derivationPath = buildDerivationPath({
+      purpose: req.query.purpose || 44,
+      coinType: req.query.coinType || 60,
+      account: req.query.account || 0,
+      change: req.query.change,
+      addressIndex: req.query.addressIndex,
+    }) // Ensure it exports at least the "account level node"
 
     if (!walletId) return res.status(400).json({ error: 'walletId is required' })
 
@@ -58,7 +64,13 @@ app.post('/hd-wallet/:walletId/sign', async (req, res) => {
   try {
     const { walletId } = req.params
     const { wallet, unsignedTx } = req.body
-    const derivationPath = buildDerivationPath(wallet)
+    const derivationPath = buildDerivationPath({
+      purpose: wallet.purpose || 44,
+      coinType: wallet.coinType || 60,
+      account: wallet.account || 0,
+      change: wallet.change || 0,
+      addressIndex: wallet.addressIndex || 0,
+    }) // Ensure it always signs at the "address level node"
 
     if (!walletId) return res.status(400).json({ error: 'walletId is required' })
     if (typeof walletId !== 'string') return res.status(400).json({ error: 'walletId must be a string' })
@@ -75,15 +87,44 @@ app.post('/hd-wallet/:walletId/sign', async (req, res) => {
   }
 })
 
+// TODO: Refactor this sad code
 // TODO: Move to a separate file
 function buildDerivationPath({
-  purpose = 44,
-  coinType = 60,
-  account = 0,
-  change = 0,
-  addressIndex = 0,
+  purpose,
+  coinType,
+  account,
+  change,
+  addressIndex,
 } = {}) {
-  return `m/${purpose}'/${coinType}'/${account}'/${change}/${addressIndex}`
+  let path = 'm'
+
+  if (purpose) {
+    path += `/${purpose}'`
+  } else {
+    // Cannot include further segments without purpose
+    return path
+  }
+
+  if (coinType) {
+    path += `/${coinType}'`
+  } else {
+    // Cannot include further segments without coinType
+    return path
+  }
+
+  if (account || account === 0) {
+    path += `/${account}'`
+  } else {
+    // Cannot include further segments without account
+    return path
+  }
+
+  if (addressIndex || addressIndex === 0) {
+    path += `/${change || 0}`
+    path += `/${addressIndex}`
+  }
+
+  return path
 }
 
 export default app

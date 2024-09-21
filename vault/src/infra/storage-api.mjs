@@ -1,3 +1,5 @@
+// Implement DynamoDB or Secrets Manager here
+
 export class StorageAPI {
   constructor () {
     this.storageClient = new Map()
