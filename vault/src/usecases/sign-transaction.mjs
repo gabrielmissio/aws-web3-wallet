@@ -1,16 +1,23 @@
 import { HDNodeWallet, Transaction } from 'ethers'
 
 export class SignTransaction {
-  constructor({ kmsApi, storageApi }) {
+  constructor({ kmsApi, secretRepository }) {
     this.kmsApi = kmsApi
-    this.storageApi = storageApi
+    this.secretRepository = secretRepository
   }
 
   async execute({ walletId, unsignedTx, derivationPath } = {}) {
-    const wallet = await this.storageApi.load({ key: walletId })
-    if (!wallet) throw new Error('Wallet not found')
+    const secret = await this.secretRepository.getSecret(walletId)
+    if (!secret) throw new Error('Wallet not found')
 
-    const masterNode = HDNodeWallet.fromExtendedKey(wallet.xprv)
+    const plaintextXpub = await this.kmsApi.decrypt({
+      keyId: secret.keyId,
+      ciphertext: secret.ciphertext,
+    })
+
+    // TODO: check if we need to "clean up" the sensitive data
+
+    const masterNode = HDNodeWallet.fromExtendedKey(plaintextXpub.toString())
     const node = masterNode.derivePath(derivationPath)
 
     const parsedUnsignedTx = Transaction.from(unsignedTx)

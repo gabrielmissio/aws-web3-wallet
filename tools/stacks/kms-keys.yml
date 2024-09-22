@@ -1,0 +1,46 @@
+Parameters:
+  AppName:
+    Description: The app of the stack
+    Default: Web3Wallet
+    Type: String
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9\-]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  StageName:
+    Description: The stage of the stack
+    Default: dev
+    Type: String
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9\-]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+
+Resources:
+  KmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub 'alias/${AppName}-KmsKey-${StageName}'
+      TargetKeyId: !Ref KmsKey
+
+  KmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      KeyUsage: 'ENCRYPT_DECRYPT'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'Enable IAM User Permissions'
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+
+Outputs:
+  KmsKeyId:
+    Description: The ID of the KMS key
+    Value: !Ref KmsKey
+  KmsKeyAlias:
+    Description: The alias of the KMS key
+    Value: !Ref KmsKeyAlias

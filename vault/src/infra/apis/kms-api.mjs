@@ -1,4 +1,9 @@
-import { KMSClient, GenerateRandomCommand, EncryptCommand } from '@aws-sdk/client-kms'
+import {
+  KMSClient,
+  EncryptCommand,
+  DecryptCommand,
+  GenerateRandomCommand,
+} from '@aws-sdk/client-kms'
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
 
 export class KMSApi {
@@ -36,5 +41,15 @@ export class KMSApi {
     const response = await this.kmsClient.send(encryptCommand)
 
     return Buffer.from(response.CiphertextBlob)
+  }
+
+  async decrypt({ ciphertext }) {
+    const decryptCommand = new DecryptCommand({
+      CiphertextBlob: ciphertext,
+    })
+
+    const response = await this.kmsClient.send(decryptCommand)
+
+    return Buffer.from(response.Plaintext)
   }
 }

@@ -1,6 +1,6 @@
 import express from 'express'
-import { KMSApi } from './infra/kms-api.mjs'
-import { StorageAPI } from './infra/storage-api.mjs'
+import { KMSApi } from './infra/apis/kms-api.mjs'
+import { SecretRepository } from './infra/repositories/secret-repository.mjs'
 import { SignTransaction } from './usecases/sign-transaction.mjs'
 import { GenerateBIP32Wallet } from './usecases/generate-hd-wallet.mjs'
 import { ExportPublicKeyInfo } from './usecases/export-public-key-info.mjs'
@@ -10,7 +10,7 @@ app.use(express.json())
 
 const isLocalhost = process.env.IS_LOCALHOST === 'true'
 const kmsApi = new KMSApi({ useSocket: !isLocalhost })
-const storageApi = new StorageAPI()
+const secretRepository = new SecretRepository()
 
 // TODO: Improve error handling
 // TODO: Improve input validation
@@ -26,7 +26,7 @@ app.post('/hd-wallet', async (req, res) => {
     if (!walletId) return res.status(400).json({ error: 'walletId is required' })
     if (typeof walletId !== 'string') return res.status(400).json({ error: 'walletId must be a string' })
 
-    const handler = new GenerateBIP32Wallet({ kmsApi, storageApi })
+    const handler = new GenerateBIP32Wallet({ kmsApi, secretRepository })
     const data = await handler.execute({ walletId })
 
     return res.status(201).json({ message: 'HD Wallet created', data })
@@ -50,7 +50,7 @@ app.get('/hd-wallet/:walletId', async (req, res) => {
 
     if (!walletId) return res.status(400).json({ error: 'walletId is required' })
 
-    const handler = new ExportPublicKeyInfo({ kmsApi, storageApi })
+    const handler = new ExportPublicKeyInfo({ kmsApi, secretRepository })
     const data = await handler.execute({ walletId, derivationPath })
 
     return res.status(200).json({ message: `HD Wallet ${req.params.walletId}`, data })
@@ -77,7 +77,7 @@ app.post('/hd-wallet/:walletId/sign', async (req, res) => {
     if (!unsignedTx) return res.status(400).json({ error: 'unsignedTx is required' })
     if (typeof unsignedTx !== 'string') return res.status(400).json({ error: 'unsignedTx must be an string' })
 
-    const handler = new SignTransaction({ kmsApi, storageApi })
+    const handler = new SignTransaction({ kmsApi, secretRepository })
     const data = await handler.execute({ walletId, unsignedTx, derivationPath })
 
     return res.status(200).json({ message: `HD Wallet ${req.params.walletId} signed`, data })
